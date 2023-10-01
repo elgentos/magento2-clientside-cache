@@ -1,0 +1,167 @@
+<?php
+
+use Laminas\Escaper\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+
+$blocksKey = '--BLOCKS--';
+$handlesKey = '--HANDLES--';
+$baseUrl = $block->getUrl(
+        'page_cache/block/render',
+        [
+                'ajax' => 1,
+                '_query' =>
+                    [
+                        'blocks' => $blocksKey,
+                        'handles' => $handlesKey,
+                    ]
+        ]);
+?>
+<script>
+    "use strict";
+    (() => {
+        const BASEURL = '<?= $baseUrl ?>',
+            BLOCKS_KEY = '<?= $blocksKey ?>',
+            HANDLES_KEY = '<?= $handlesKey ?>',
+            TIMEOUT = 100;
+
+        let stack = [], timer;
+
+        const fetchCache = (blocks, handles) => {
+                const url = BASEURL.replace(BLOCKS_KEY, JSON.stringify(blocks))
+                    .replace(HANDLES_KEY, btoa(JSON.stringify(handles ?? 'default')));
+
+                // Current endpoint is non json, do it the old way
+                return fetch(url)
+                    .then(x => x.text())
+                    .then(x => JSON.parse(x));
+            },
+            fulfillStack = () => {
+                // clone stack to process and make ready for next requests
+                const progressStack = [...stack];
+                stack.length = 0;
+
+                // Group all requests to handles and blocks
+                const handlesAndBlocks = {}, requestsPerHandle = {};
+
+                progressStack.forEach(request => {
+                    const handleKey = request.handles.join('|'),
+                        ref = (handlesAndBlocks[handleKey] = handlesAndBlocks[handleKey] || {}),
+                        requests = (requestsPerHandle[handleKey] = requestsPerHandle[handleKey] || []);
+
+                    requests.push(request);
+
+                    request.blocks.forEach(block => {
+                        ref[block] = ref[block] || [];
+                        ref[block].push(request);
+                    });
+                });
+
+                // To avoid layout handle conflicts do the requests per handle
+                for (const handleKey in handlesAndBlocks) {
+                    const blocksPerHandle = handlesAndBlocks[handleKey],
+                        requests = requestsPerHandle[handleKey],
+                        blocks = Object.keys(blocksPerHandle),
+                        handles = blocksPerHandle[blocks[0]][0].handles;
+
+                    // create callback with right object, because we will turn async here
+                    // then we need to create the right response for the right callback
+                    const handleResponseToCorrectRequest = ((blocksPerHandle) => (response) => {
+                        blocks.forEach(block => {
+                            blocksPerHandle[block].forEach(request => request.results.push(response[block] ?? ''));
+                        });
+
+                        requests.forEach(request => request.resolve.success(request.results));
+                    })(blocksPerHandle, blocks);
+
+                    // fetch content
+                    fetchCache(blocks, handles)
+                        // @todo implement catch when something went wrong
+                        // .catch(x => requests.forEach(request => request.resolve.failure(x)))
+                        .then(handleResponseToCorrectRequest)
+                    ;
+                }
+            },
+            createRequest = (blocks, handles) => {
+                if (typeof(blocks) === 'string') {
+                    blocks = [blocks];
+                }
+                handles = handles ?? ['default'];
+                if (typeof(handles) === 'string') {
+                    handles = [handles];
+                }
+
+                let resolve = () => {};
+                const createResolver = (success, failure) => ({success, failure}),
+                    promise =  new Promise((success, failure) => {
+                        resolve = createResolver(success, failure);
+                    }),
+                    results = [];
+
+                // Create a request object
+                const request = {
+                    blocks,
+                    handles,
+                    promise,
+                    resolve,
+                    results
+                };
+
+                // Add request to stack
+                stack.push(request);
+
+                // Reset timer to add more to the stack
+                clearTimeout(timer);
+                timer = setTimeout(fulfillStack, TIMEOUT);
+
+                return promise;
+            };
+
+        // Fetch the dynamic blocks which are moved
+        addEventListener('DOMContentLoaded', () => {
+
+            // Lookup elements
+            Array.from(document.querySelectorAll('script[type="x-clientside-cache')).map(element => {
+                // Decode parameters
+                const params = JSON.parse(element.innerText ?? ''),
+                    blocks = params[0] ?? [],
+                    handles = params[1] ?? [];
+
+                if (blocks.length < 1) {
+                    return;
+                }
+
+                // Create a request to fetch the data
+                createRequest(blocks, handles).then(response => {
+                    const wrapper = document.createElement('div');
+                    wrapper.innerHTML = response;
+
+                    const elements = Array.from(wrapper.children),
+                        scripts = elements.filter(e => e.tagName.toLowerCase() === 'script');
+
+                    if (scripts.length > 0) {
+                        // evaluate scripts, CORS permission need to allow this
+                        scripts.forEach(script => Function(script.innerText).call(window));
+                    }
+
+                    if (wrapper.children.length < 1) {
+                        // Text only node
+                        element.parentNode.insertBefore(wrapper, element);
+                    } else {
+                        // always insert individual nodes
+                        elements.filter(e => e.tagName.toLowerCase() !== 'script')
+                            .forEach(child => element.parentNode.insertBefore(child, element));
+                    }
+
+                    // removed self
+                    element.parentNode.removeChild(element);
+                })
+            });
+        });
+
+        // Make a global assignment, will return
+        window.clientsideCacheAsync = createRequest;
+    })();
+</script>

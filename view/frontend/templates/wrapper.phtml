@@ -1,0 +1,13 @@
+<?php
+
+use Laminas\Escaper\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+
+$handles = $block->getLayout()->getUpdate()->getHandles();
+$blockNames = $block->getChildNames();
+?>
+<script type="x-clientside-cache"><?= json_encode([$blockNames, $handles]) ?></script>
+
