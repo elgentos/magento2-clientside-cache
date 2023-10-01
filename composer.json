@@ -7,7 +7,7 @@
     "magento/module-page-cache": "100.4.*"
   },
   "license": [
-    "Open Software License (OSL)"
+    "GPL-3.0-or-later"
   ],
   "autoload": {
     "files": [
