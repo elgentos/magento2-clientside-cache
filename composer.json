@@ -1,0 +1,20 @@
+{
+  "name": "elgentos/magento2-clientside-cache",
+  "description": "Elgentos Clientside Cache",
+  "type": "magento2-module",
+  "require": {
+    "magento/framework": "*",
+    "magento/module-page-cache": "100.4.*"
+  },
+  "license": [
+    "Open Software License (OSL)"
+  ],
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "Elgentos\\ClientsideCache\\": ""
+    }
+  }
+}
