@@ -153,11 +153,14 @@ $baseUrl = $block->getUrl(
                     wrapper.innerHTML = response;
 
                     const elements = Array.from(wrapper.children),
-                        scripts = elements.filter(e => e.tagName.toLowerCase() === 'script');
+                        scripts = Array.from(wrapper.querySelectorAll('script'));
 
                     if (scripts.length > 0) {
                         // evaluate scripts, CORS permission need to allow this
                         scripts.forEach(script => Function(script.innerText).call(window));
+
+                        // remove scripts from tree
+                        scripts.forEach(script => script.parentNode.removeChild(script));
                     }
 
                     if (wrapper.children.length < 1) {
@@ -165,8 +168,7 @@ $baseUrl = $block->getUrl(
                         element.parentNode.insertBefore(wrapper, element);
                     } else {
                         // always insert individual nodes
-                        elements.filter(e => e.tagName.toLowerCase() !== 'script')
-                            .forEach(child => element.parentNode.insertBefore(child, element));
+                        elements.forEach(child => element.parentNode.insertBefore(child, element));
                     }
 
                     // removed self
