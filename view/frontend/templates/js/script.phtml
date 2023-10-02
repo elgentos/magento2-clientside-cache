@@ -10,13 +10,13 @@ $blocksKey = '--BLOCKS--';
 $handlesKey = '--HANDLES--';
 
 // Get current request
-$request = $block->getRequest();
-$currentRequest = [
-    'route' => $request->getRouteName(),
-    'controller' => $request->getControllerName(),
-    'action' => $request->getActionName(),
-    'uri' => $request->getPathInfo(),
-];
+//$request = $block->getRequest();
+//$currentRequest = [
+//    'route' => $request->getRouteName(),
+//    'controller' => $request->getControllerName(),
+//    'action' => $request->getActionName(),
+//    'uri' => $request->getPathInfo(),
+//];
 
 $baseUrl = $block->getUrl(
         'page_cache/block/render',
@@ -26,7 +26,7 @@ $baseUrl = $block->getUrl(
                     [
                         'blocks' => $blocksKey,
                         'handles' => $handlesKey,
-                        'currentRequest' => json_encode($currentRequest),
+//                        'currentRequest' => json_encode($currentRequest),
                     ]
         ]);
 ?>
