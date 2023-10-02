@@ -69,3 +69,10 @@ clientsideCacheAsync(['block_name', 'other_block'], ['default', 'catalog_categor
 clientsideCacheAsync(['another_block'], ['default', 'catalog_category_view']).then(results => console.log(results))
 // {another_block: ""}
 ```
+
+## Special thanks
+The module was created during the Hackthon before the [Mage Unconference in Cologne](https://www.mageunconference.org/).
+Thanks to the team for organising another great event and for the Hackathon.
+
+## Author
+- [Jeroen Boersma](https://github.com/JeroenBoersma)

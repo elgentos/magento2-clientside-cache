@@ -9,6 +9,12 @@
   "license": [
     "GPL-3.0-or-later"
   ],
+  "authors": [
+    {
+      "name": "Jeroen Boersma",
+      "email": "jeroen@elgentos.nl"
+    }
+  ],
   "autoload": {
     "files": [
       "registration.php"
