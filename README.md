@@ -37,6 +37,26 @@ around the original block, and use the correct alias `as=""` so the original blo
 </page>
 ```
 
+### Limit handles
+You can limit the handles within the Async wrapper. This increases the possibility to re-use requests.
+An example would be menu's which are the same on every page.
+
+`layout/default.xml`
+```xml
+
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <!-- This will only use the default handle -->
+        <block class="Elgentos\ClientsideCache\Block\Async" as="moved-the-alias-name-to-here">
+            <argument name="handles" xsi:type="array">
+                <item name="default" xsi:type="string">default</item>
+            </argument>
+        </block>
+    </body>
+</page>
+```
+
 ## Features
 - Fetch content async
 - Group similar requests for handles into on one single request

@@ -6,7 +6,9 @@ use Magento\Framework\View\Element\Template;
 /** @var Template $block */
 /** @var Escaper $escaper */
 
-$handles = $block->getLayout()->getUpdate()->getHandles();
+$data = $block->getData();
+
+$handles = array_values((array)($data['handles'] ?? $block->getLayout()->getUpdate()->getHandles()));
 $blockNames = $block->getChildNames();
 ?>
 <script type="x-clientside-cache"><?= json_encode([$blockNames, $handles]) ?></script>
